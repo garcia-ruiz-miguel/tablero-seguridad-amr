@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tablero de seguridad AMR · MiR250</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --tec:#0039A6; --tec-dark:#00205B; --tec-mid:#0050C8; --tec-soft:#E8EFFB;
+  --bg:#F1F4F9; --panel:#FFFFFF; --ink:#14213D; --muted:#5A6782; --line:#D9E1EE;
+  --safe:#13834F; --safe-bg:#E3F4EA; --warn:#C27C00; --warn-bg:#FDF2DC; --stop:#C0362C; --stop-bg:#FBE4E1;
+  --onblue:#FFFFFF; --onblue-2:rgba(255,255,255,.78); --near-on-blue:#FFC857; --safe-on-blue:#6EE7A8;
+  --shadow:0 1px 2px rgba(0,32,91,.06),0 10px 28px rgba(0,32,91,.09);
+  --disp:"Barlow Condensed","Arial Narrow",Arial,sans-serif; --body:"Barlow","Segoe UI",Roboto,Arial,sans-serif;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0C1424; --panel:#142036; --ink:#E6ECF7; --muted:#9BA9C2; --line:#24334F; --tec-soft:#16264A; --tec-mid:#4D8BFF;
+  --safe:#4CC488; --safe-bg:#143528; --warn:#F0B53A; --warn-bg:#3A2E12; --stop:#F07A6E; --stop-bg:#3F1D1B;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --bg:#0C1424; --panel:#142036; --ink:#E6ECF7; --muted:#9BA9C2; --line:#24334F; --tec-soft:#16264A; --tec-mid:#4D8BFF;
+  --safe:#4CC488; --safe-bg:#143528; --warn:#F0B53A; --warn-bg:#3A2E12; --stop:#F07A6E; --stop-bg:#3F1D1B;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.35);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.topbar{height:8px;background:var(--tec)}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 16px 48px}
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+header.top h1{font-family:var(--disp);font-weight:700;font-size:32px;line-height:1.05;margin:0;color:var(--tec-dark)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) header.top h1{color:var(--ink)}}
+:root[data-theme="dark"] header.top h1{color:var(--ink)}
+header.top p{margin:4px 0 0;color:var(--muted);font-size:15px}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+button{font-family:var(--body);font-size:15px;font-weight:500;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 16px;cursor:pointer;min-height:40px;transition:border-color .15s,background .15s}
+button:hover{border-color:var(--tec-mid)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--tec-mid);outline-offset:2px}
+button.primary{background:var(--tec);color:#fff;border-color:var(--tec)}
+button.primary:hover{background:var(--tec-dark);border-color:var(--tec-dark)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.danger{color:var(--stop);border-color:var(--stop)}
+
+.sign{border-radius:16px;overflow:hidden;background:linear-gradient(135deg,var(--tec-dark) 0%,var(--tec) 100%);color:var(--onblue);display:grid;grid-template-columns:1.4fr 1fr 1fr;grid-template-rows:auto auto;box-shadow:0 14px 36px rgba(0,32,91,.28);position:relative}
+.stripe{display:none}
+.kpi{padding:26px 28px;border-right:1px solid rgba(255,255,255,.16);position:relative}
+.kpi:last-of-type{border-right:0}
+.kpi.days{grid-column:1;grid-row:1/3}
+.kpi.ev{padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.16)}
+.kpi.ev .n{font-size:clamp(44px,6vw,78px)}
+.kpi.ev .l{font-size:15px;margin-top:6px}
+.kpi.near{grid-column:2;grid-row:1}.kpi.inc{grid-column:3;grid-row:1}.kpi.inj{grid-column:2;grid-row:2;border-bottom:0}.kpi.dmg{grid-column:3;grid-row:2;border-bottom:0}
+.kpi.inc,.kpi.dmg{border-right:0}
+.kpi.insp{grid-column:4;grid-row:1/3;border-right:0;border-left:1px solid rgba(255,255,255,.16)}
+.kpi.inj .n.hot,.kpi.dmg .n.hot{color:#FF9B90}
+.kpi.near .thanks{margin-top:8px;font-size:13px;padding:3px 10px}
+
+.kpi .n{font-family:var(--disp);font-weight:700;line-height:.9;font-size:clamp(56px,9vw,116px);font-variant-numeric:tabular-nums;color:var(--onblue)}
+.kpi.days{background:rgba(0,0,0,.14)}
+.kpi.days .n{font-size:clamp(88px,14vw,184px)}
+.kpi.near .n{color:var(--near-on-blue)}
+.kpi .l{font-size:17px;font-weight:500;margin-top:8px;color:var(--onblue)}
+.kpi .s{color:var(--onblue-2);font-size:14px;margin-top:2px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:12px;background:rgba(110,231,168,.16);color:var(--safe-on-blue);padding:4px 12px;border-radius:999px;font-size:14px;font-weight:600}
+.status::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor}
+.kpi.days.alert .n{color:#FF9B90}
+.kpi.days.alert .status{background:rgba(255,155,144,.18);color:#FF9B90}
+.thanks{display:inline-block;margin-top:12px;background:rgba(255,200,87,.16);color:var(--near-on-blue);padding:4px 12px;border-radius:999px;font-size:14px;font-weight:600}
+
+.tip{margin:18px 0 24px;display:flex;gap:16px;align-items:flex-start;background:var(--panel);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);border-left:6px solid var(--tec)}
+.tip .k{font-family:var(--disp);font-weight:600;font-size:18px;white-space:nowrap;color:var(--tec-mid)}
+.tip p{margin:0;font-size:17px;max-width:72ch}
+.tipbody{display:flex;flex-direction:column;gap:8px}
+.std{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:baseline;align-self:flex-start;background:var(--tec-soft);color:var(--ink);border-radius:999px;padding:4px 14px;font-size:14px}
+.std .std-k{color:var(--muted)}
+.std strong{color:var(--tec-mid);font-weight:600}
+body.present .std{font-size:clamp(15px,1.5vw,20px)}
+
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+section.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;box-shadow:var(--shadow);border-top:4px solid var(--tec)}
+section.card h2{font-family:var(--disp);font-weight:600;font-size:23px;margin:0 0 4px}
+section.card .sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+label{display:block;font-size:14px;font-weight:500;margin:10px 0 4px}
+input,select,textarea{width:100%;font-family:var(--body);font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+textarea{min-height:64px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.types{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.types label{margin:0;display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-weight:500;cursor:pointer;background:var(--panel)}
+.types input{width:auto}
+.types label:has(input:checked){border-color:var(--tec-mid);background:var(--tec-soft);box-shadow:inset 0 0 0 1px var(--tec-mid)}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.d-near{background:var(--warn)}.d-inc{background:var(--muted)}.d-inj,.d-dmg{background:var(--stop)}
+.err{color:var(--stop);font-size:14px;min-height:20px;margin-top:6px}
+.ok{color:var(--safe);font-size:14px;min-height:20px;margin-top:6px}
+
+.check{list-style:none;margin:0;padding:0}
+.check li{border-bottom:1px solid var(--line)}
+.check li:last-child{border-bottom:0}
+.check li.grp{border-bottom:0;padding:14px 0 6px;display:flex;flex-direction:column}
+.check li.grp:first-child{padding-top:2px}
+.check li.grp + li{border-top:1px solid var(--line)}
+.check .gt{font-family:var(--disp);font-weight:600;font-size:18px;color:var(--tec-mid)}
+.check .gs{font-size:13px;color:var(--muted)}
+.check li.grp ~ li.grp{margin-top:6px;border-top:2px solid var(--tec-soft)}
+
+.check label{display:flex;gap:12px;align-items:center;margin:0;padding:10px 2px;font-weight:400;font-size:15px;cursor:pointer}
+.check input{width:20px;height:20px;flex:none;accent-color:var(--tec)}
+.progress{height:10px;background:var(--tec-soft);border-radius:5px;overflow:hidden;margin:14px 0}
+.progress span{display:block;height:100%;background:linear-gradient(90deg,var(--tec),var(--tec-mid));width:0;transition:width .25s}
+
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.chartbox{position:relative;height:240px}
+.log-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:760px}
+th{text-align:left;font-weight:600;color:var(--tec-mid);background:var(--tec-soft);padding:10px 8px}
+th:first-child{border-radius:8px 0 0 8px}th:last-child{border-radius:0 8px 8px 0}
+td{border-bottom:1px solid var(--line);padding:9px 8px;vertical-align:top}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap}
+.p-near{background:var(--warn-bg);color:var(--warn)}.p-inc{background:var(--tec-soft);color:var(--ink)}.p-inj,.p-dmg{background:var(--stop-bg);color:var(--stop)}
+.demo{font-size:12px;color:var(--muted);border:1px dashed var(--line);border-radius:4px;padding:0 6px;margin-left:4px}
+.empty{color:var(--muted);padding:18px 0}
+.notice{background:var(--warn-bg);color:var(--ink);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:15px;display:none}
+.admin{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+@media (max-width:600px){.icon-btn{padding:4px 10px;min-height:30px;font-size:13px}
+
+body.present .edit-only{display:none!important}
+body.present .tip p{font-size:clamp(20px,2.4vw,30px)}
+body.present .tip .k{font-size:24px}
+body.present .kpi .l{font-size:22px}
+body.present header.top h1{font-size:44px}
+
+@media (max-width:860px){
+  .sign{grid-template-columns:1fr 1fr;grid-template-rows:none}
+  .kpi.days{grid-column:1/-1;grid-row:auto;border-right:0;border-bottom:1px solid rgba(255,255,255,.16)}
+  .kpi.near,.kpi.inc,.kpi.inj,.kpi.dmg{grid-row:auto;grid-column:auto;border-bottom:1px solid rgba(255,255,255,.16)}
+  .kpi.inc,.kpi.dmg{border-right:0}
+  .kpi.insp{grid-column:1/-1;grid-row:auto;border-left:0}
+  .grid,.charts{grid-template-columns:1fr}
+}
+@media (max-width:480px){.row2,.types{grid-template-columns:1fr}.kpi{padding:18px}.tip{flex-direction:column;align-items:flex-start;gap:4px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="topbar" aria-hidden="true"></div>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1 data-i18n="title">Seguridad en operación del AMR</h1>
+      <p data-i18n="subtitle">AMR · MIR250 · Sistemas Ciberfísicos</p>
+    </div>
+    <div class="tools">
+      <button id="btnLang" type="button">English</button>
+      <button id="btnPresent" type="button" class="primary" data-i18n="present">Modo presentación</button>
+    </div>
+  </header>
+
+  <div class="notice" id="notice"></div>
+
+  <div class="sign" role="region" aria-label="Indicadores">
+    <div class="stripe" aria-hidden="true"></div>
+    <div class="kpi days" id="kDays">
+      <div class="n" id="vDays">0</div>
+      <div class="l" data-i18n="kDays">Días sin incidentes con lesión o daño al equipo</div>
+      <div class="s" id="vRecord"></div>
+      <div class="status" id="vStatus"></div>
+    </div>
+    <div class="kpi ev near">
+      <div class="n" id="vNear">0</div>
+      <div class="l" data-i18n="kNear">Cuasi-incidentes reportados</div>
+      <div class="thanks" data-i18n="thanks">Gracias por reportar</div>
+    </div>
+    <div class="kpi ev inc">
+      <div class="n" id="vInc">0</div>
+      <div class="l" data-i18n="kInc">Incidentes sin lesión</div>
+    </div>
+    <div class="kpi ev inj">
+      <div class="n" id="vInj">0</div>
+      <div class="l" data-i18n="kInj">Incidentes con lesión</div>
+    </div>
+    <div class="kpi ev dmg">
+      <div class="n" id="vDmg">0</div>
+      <div class="l" data-i18n="kDmg">Daños a equipo</div>
+    </div>
+  </div>
+
+  <div class="tip" aria-live="polite">
+    <span class="k" data-i18n="tipK">Principio de seguridad</span>
+    <div class="tipbody"><p id="tipText"></p><div class="std" id="tipStd"><span class="std-k" data-i18n="stdK">Basado en</span> <strong id="tipStdCode"></strong> <span id="tipStdTopic"></span></div></div>
+  </div>
+
+  <div class="grid edit-only">
+    <section class="card">
+      <h2 data-i18n="chkT">Checklist operación del MiR250</h2>
+      <p class="sub" data-i18n="chkS">Verifica las condiciones y confirma las reglas antes de la primera misión de la sesión.</p>
+      <ul class="check" id="chk"></ul>
+      <div class="progress" aria-hidden="true"><span id="chkBar"></span></div>
+      <div class="ok" id="chkOk" role="status"></div>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="formT">Reportar un evento</h2>
+      <p class="sub" data-i18n="formS">Reportar un cuasi-incidente es lo correcto: es una lección que no costó nada.</p>
+      <form id="evForm" novalidate>
+        <label data-i18n="fType">Tipo de evento</label>
+        <div class="types" id="typeBox"></div>
+        <div class="row2">
+          <div><label for="fWhen" data-i18n="fWhen">Fecha y hora</label><input id="fWhen" type="datetime-local"></div>
+          <div><label for="fZone" data-i18n="fZone">Zona</label><select id="fZone"></select></div>
+        </div>
+        <label for="fCause" data-i18n="fCat">Categoría de causa</label>
+        <select id="fCause"></select>
+        <label for="fDesc" data-i18n="fDesc">¿Qué pasó?</label>
+        <textarea id="fDesc" maxlength="500"></textarea>
+        <label for="fWhy" data-i18n="fWhy">Causa probable</label>
+        <textarea id="fWhy" maxlength="400"></textarea>
+        <label for="fAct" data-i18n="fAct">Acción correctiva</label>
+        <textarea id="fAct" maxlength="400"></textarea>
+        <label for="fWho" data-i18n="fWho">Reportado por (opcional)</label>
+        <input id="fWho" type="text" maxlength="80" data-i18n-ph="fWhoPh" placeholder="Déjalo vacío para reportar de forma anónima">
+        <div class="err" id="fErr" role="alert"></div>
+        <button type="submit" class="primary" id="btnSave" data-i18n="save">Registrar evento</button>
+        <div class="ok" id="fOk" role="status"></div>
+      </form>
+    </section>
+  </div>
+
+  <div class="charts edit-only" style="margin-top:18px">
+    <section class="card"><h2 data-i18n="c1">Eventos por tipo</h2><div class="chartbox"><canvas id="ch1" aria-label="Eventos por tipo"></canvas></div></section>
+    <section class="card"><h2 data-i18n="c3">Tendencia mensual</h2><div class="chartbox"><canvas id="ch3" aria-label="Tendencia mensual"></canvas></div></section>
+  </div>
+
+  <section class="card edit-only" style="margin-top:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div><h2 data-i18n="logT">Registro de eventos</h2><p class="sub" id="logCount"></p></div>
+      <button type="button" id="btnCsv" data-i18n="csv">Exportar CSV</button>
+    </div>
+    <div class="log-wrap"><table>
+      <thead><tr>
+        <th data-i18n="hWhen">Fecha</th><th data-i18n="hType">Tipo</th><th data-i18n="hZone">Zona</th><th data-i18n="hCause">Causa</th>
+        <th data-i18n="hDesc">Descripción</th><th data-i18n="hAct">Acción correctiva</th><th data-i18n="hWho">Reportó</th><th></th>
+      </tr></thead>
+      <tbody id="logBody"></tbody>
+    </table></div>
+    <div class="admin"><button type="button" id="btnTeacher" class="icon-btn" data-i18n="teacher">Acceso profesor</button></div>
+    <div class="admin" id="adminBox" hidden>
+      <button type="button" id="btnDemo" data-i18n="delDemo">Borrar eventos demo</button>
+      <button type="button" class="danger" id="btnReset" data-i18n="reset">Reiniciar semestre</button>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// =====================================================================
+// PEGA AQUÍ la URL de tu aplicación web de Apps Script (termina en /exec),
+// sin "u/1/". Ejemplo: https://script.google.com/macros/s/AKfy.../exec
+const API_URL = "https://script.google.com/macros/s/AKfycbwDuqcjsj-yJGf5C8CmrV0zBNdrO-HnIR3U6ijTnlJGj2dEybBpmo6oQEEwGR0j1aiL/exec";
+// =====================================================================
+const T = {
+ es:{title:"Seguridad en operación del AMR",subtitle:"AMR · MIR250 · Sistemas Ciberfísicos",present:"Modo presentación",exitPresent:"Salir de presentación",
+  kDays:"Días sin incidentes con lesión o daño al equipo",kNear:"Cuasi-incidentes reportados",kInc:"Incidentes sin lesión",kInj:"Incidentes con lesión",kDmg:"Daños a equipo",thanks:"Gracias por reportar",kInsp:"Inspecciones pre-operación",semester:"En este semestre",
+  record:"Récord del semestre: {n} días",stOk:"Operación segura",stAlert:"Incidente reciente: revisión en curso",tipK:"Principio de seguridad",stdK:"Basado en",formT:"Reportar un evento",formS:"Reportar un cuasi-incidente es lo correcto: es una lección que no costó nada.",
+  fType:"Tipo de evento",fWhen:"Fecha y hora",fZone:"Zona",fCat:"Categoría de causa",fDesc:"¿Qué pasó?",fWhy:"Causa probable",fAct:"Acción correctiva",fWho:"Reportado por (opcional)",fWhoPh:"Déjalo vacío para reportar de forma anónima",
+  save:"Registrar evento",saved:"Evento registrado. Gracias por reportar.",needType:"Selecciona el tipo de evento.",needDesc:"Describe brevemente qué pasó.",needCause:"Selecciona una categoría de causa.",
+  chkT:"Checklist operación del MiR250",chkS:"Verifica las condiciones y confirma las reglas antes de la primera misión de la sesión.",chkBtn:"Registrar inspección",grpA:"Verificar antes de operar",grpAs:"Condiciones del equipo y del área",grpB:"Reglas durante la operación",grpBs:"El equipo se compromete a cumplirlas",chkDone:"Inspección registrada. El robot puede operar.",chkReady:"Checklist completo. El robot puede operar.",
+  c1:"Eventos por tipo",c2:"Eventos por causa",c3:"Tendencia mensual",logT:"Registro de eventos",logN:"{n} eventos registrados",csv:"Exportar CSV",
+  hWhen:"Fecha",hType:"Tipo",hZone:"Zona",hCause:"Causa",hDesc:"Descripción",hAct:"Acción correctiva",hWho:"Reportó",anon:"Anónimo",empty:"Aún no hay eventos. El primer reporte de un cuasi-incidente abre el registro.",
+  delDemo:"Borrar eventos demo",reset:"Reiniciar semestre",confirmReset:"Se borrarán todos los eventos e inspecciones y el contador empezará de cero. ¿Continuar?",confirmDel:"¿Eliminar este evento?",del:"Eliminar",
+  ro:"Estás viendo el tablero en modo solo lectura. Para registrar eventos e inspecciones, pide al profesor acceso como colaborador.",nodb:"Vista previa: los datos no se guardan. Abre el tablero desde su liga de claude.ai para registrar y compartir.",
+  writeErr:"No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.",badAdmin:"Código de profesor incorrecto.",offline:"No hay conexión con el servidor. Recarga la página.",teacher:"Acceso profesor",teacherOut:"Salir de modo profesor",teacherPrompt:"Código de profesor:",quota:"El tablero alcanzó su límite de almacenamiento. Exporta el CSV y reinicia el semestre."},
+ en:{title:"AMR operational safety",subtitle:"AMR · MIR250 · Cyber-Physical Systems",present:"Presentation mode",exitPresent:"Exit presentation",
+  kDays:"Days without injury or equipment damage",kNear:"Near misses reported",kInc:"Incidents, no injury",kInj:"Incidents with injury",kDmg:"Equipment damage",thanks:"Thanks for reporting",kInsp:"Pre-operation inspections",semester:"This semester",
+  record:"Semester record: {n} days",stOk:"Safe operation",stAlert:"Recent incident: under review",tipK:"Safety principle",stdK:"Based on",formT:"Report an event",formS:"Reporting a near miss is the right call: it's a lesson that cost nothing.",
+  fType:"Event type",fWhen:"Date and time",fZone:"Zone",fCat:"Cause category",fDesc:"What happened?",fWhy:"Probable cause",fAct:"Corrective action",fWho:"Reported by (optional)",fWhoPh:"Leave empty to report anonymously",
+  save:"Log event",saved:"Event logged. Thanks for reporting.",needType:"Select the event type.",needDesc:"Briefly describe what happened.",needCause:"Select a cause category.",
+  chkT:"MiR250 operation checklist",chkS:"Check the conditions and confirm the rules before the first mission of the session.",chkBtn:"Log inspection",grpA:"Check before operating",grpAs:"Equipment and area conditions",grpB:"Rules during operation",grpBs:"The team commits to follow them",chkDone:"Inspection logged. The robot is cleared to operate.",chkReady:"Checklist complete. The robot is cleared to operate.",
+  c1:"Events by type",c2:"Events by cause",c3:"Monthly trend",logT:"Event log",logN:"{n} events logged",csv:"Export CSV",
+  hWhen:"Date",hType:"Type",hZone:"Zone",hCause:"Cause",hDesc:"Description",hAct:"Corrective action",hWho:"Reported by",anon:"Anonymous",empty:"No events yet. The first near-miss report opens the log.",
+  delDemo:"Delete demo events",reset:"Reset semester",confirmReset:"All events and inspections will be deleted and the counter will restart. Continue?",confirmDel:"Delete this event?",del:"Delete",
+  ro:"You're viewing the board read-only. Ask your instructor for contributor access to log events and inspections.",nodb:"Preview: data isn't saved. Open the board from its claude.ai link to log and share.",
+  writeErr:"Couldn't save. Check your connection and try again.",badAdmin:"Incorrect instructor code.",offline:"No connection to the server. Reload the page.",teacher:"Instructor access",teacherOut:"Exit instructor mode",teacherPrompt:"Instructor code:",quota:"The board reached its storage limit. Export the CSV and reset the semester."}
+};
+const TYPES={near:{es:"Cuasi-incidente",en:"Near miss",cls:"near"},inc:{es:"Incidente sin lesión",en:"Incident, no injury",cls:"inc"},inj:{es:"Incidente con lesión",en:"Incident with injury",cls:"inj"},dmg:{es:"Daño a equipo",en:"Equipment damage",cls:"dmg"}};
+const SERIOUS=["inj","dmg"];
+const CAUSES={scanner:{es:"Zona de protección del escáner invadida",en:"Scanner protective field breached"},estop:{es:"Paro de emergencia",en:"Emergency stop"},collision:{es:"Colisión u obstáculo",en:"Collision or obstacle"},mission:{es:"Error de programación de misión",en:"Mission programming error"},loc:{es:"Error de localización o mapa",en:"Localization or map error"},comms:{es:"Falla de comunicación (Wi-Fi)",en:"Communication failure (Wi-Fi)"},load:{es:"Carga mal asegurada o excedida",en:"Load unsecured or over capacity"},dock:{es:"Acoplamiento o llegada a estación",en:"Docking or station approach"},human:{es:"Error humano o de procedimiento",en:"Human or procedural error"},other:{es:"Otro",en:"Other"}};
+const ZONES={home:{es:"Home del MIR250",en:"MIR250 home"},charge:{es:"Zona de carga de batería",en:"Battery charging area"},etilab:{es:"ET'I Lab",en:"ET'I Lab"},aisle:{es:"Pasillos del CIMA",en:"CIMA hallways"},load:{es:"Zona de carga y descarga",en:"Loading and unloading area"},station:{es:"Estación de trabajo",en:"Workstation"},door:{es:"Puerta o cruce",en:"Door or crossing"},other:{es:"Otra",en:"Other"}};
+const CHECK=[{g:"a",es:"Presencia de un profesor supervisor",en:"A supervising instructor is present"},{g:"a",es:"Paro de emergencia accesible y libre de obstrucciones",en:"Emergency stop accessible and unobstructed"},{g:"a",es:"Inspección visual antes de cada uso",en:"Visual inspection before each use"},{g:"a",es:"No existen daños visibles en el robot",en:"No visible damage to the robot"},{g:"a",es:"Batería correctamente instalada",en:"Battery correctly installed"},{g:"a",es:"Batería con carga suficiente para la sesión",en:"Battery charged enough for the session"},{g:"a",es:"Sensores y escáneres de seguridad limpios",en:"Sensors and safety scanners clean"},{g:"a",es:"Únicamente una computadora conectada a la interfaz web del robot",en:"Only one computer connected to the robot's web interface"},{g:"a",es:"Mapa correcto y robot bien localizado",en:"Correct map and robot well localized"},{g:"a",es:"Área y ruta de operación despejadas",en:"Operating area and route clear"},{g:"b",es:"Mantener una distancia segura de los usuarios y personas respecto al robot",en:"Keep users and bystanders at a safe distance from the robot"},{g:"b",es:"No bloquear deliberadamente la trayectoria del robot",en:"Never deliberately block the robot's path"},{g:"b",es:"Usar una velocidad adecuada para cada zona",en:"Use a speed suited to each zone"},{g:"b",es:"Usar los indicadores luminosos y sonoros",en:"Use the light and sound signals"}];
+const TIPS=[
+ {es:"Nunca invadas a propósito el campo de protección del escáner para \"probar\" el paro. Las pruebas se hacen con procedimiento y con el área controlada.",en:"Never step into the scanner's protective field on purpose to \"test\" the stop. Tests follow a procedure in a controlled area.",std:"ISO 3691-4:2023 · ANSI/RIA R15.08-1:2020",stdEs:"Sistemas de detección de personas",stdEn:"Personnel detection systems"},
+ {es:"El paro de emergencia se prueba al inicio de cada sesión, no el día que se necesita.",en:"Test the emergency stop at the start of every session, not on the day you need it.",std:"ISO 13850:2015 · ISO 3691-4:2023",stdEs:"Función de paro de emergencia",stdEn:"Emergency stop function"},
+ {es:"Antes de lanzar una misión, avisa: todos en el área deben saber que el robot se va a mover.",en:"Before launching a mission, announce it: everyone in the area must know the robot will move.",std:"ISO 3691-4:2023",stdEs:"Zonas de operación e información para el uso",stdEn:"Operating zones and information for use"},
+ {es:"Cerca de personas y estaciones, menos velocidad. La distancia de frenado crece con la velocidad y con la carga.",en:"Near people and stations, slow down. Stopping distance grows with speed and with load.",std:"ISO 3691-4:2023 · ANSI/RIA R15.08-1:2020",stdEs:"Velocidad y frenado en zonas con personas",stdEn:"Speed and braking near people"},
+ {es:"Una carga mal asegurada cambia el centro de masa y puede caer en un frenado de emergencia.",en:"An unsecured load shifts the center of mass and can fall during an emergency stop.",std:"ISO 3691-4:2023",stdEs:"Estabilidad y manejo de la carga",stdEn:"Stability and load handling"},
+ {es:"Si el laboratorio cambió y el mapa ya no coincide, el robot no está bien localizado: detén la operación y actualiza el mapa.",en:"If the lab changed and the map no longer matches, the robot is poorly localized: stop and update the map.",std:"ANSI/RIA R15.08-2:2023",stdEs:"Integración y puesta en marcha del sistema",stdEn:"System integration and commissioning"},
+ {es:"Nunca te coloques entre el robot y una estructura fija durante una maniobra de acoplamiento.",en:"Never stand between the robot and a fixed structure during a docking maneuver.",std:"ISO 3691-4:2023",stdEs:"Zonas de confinamiento y riesgo de atrapamiento",stdEn:"Confinement zones and trapping hazards"},
+ {es:"Las luces y sonidos del robot son para las personas a su alrededor. Si no funcionan, el robot no opera.",en:"The robot's lights and sounds are for the people around it. If they don't work, the robot doesn't run.",std:"ISO 3691-4:2023",stdEs:"Dispositivos de advertencia luminosos y sonoros",stdEn:"Visual and audible warning devices"},
+ {es:"Un cuasi-incidente reportado es una lección gratis. Uno escondido es un accidente que todavía no ocurre.",en:"A reported near miss is a free lesson. A hidden one is an accident that hasn't happened yet.",std:"ISO 45001:2018",stdEs:"Reporte e investigación de incidentes",stdEn:"Incident reporting and investigation"},
+ {es:"Las rutas del robot no son zona de almacenamiento: una caja olvidada en el pasillo cambia todo el plan de navegación.",en:"Robot routes are not storage space: a box left in the aisle changes the whole navigation plan.",std:"ISO 3691-4:2023",stdEs:"Preparación y mantenimiento de la zona de operación",stdEn:"Operating zone preparation and upkeep"}
+];
+
+let lang = "es"; try{ lang = localStorage.getItem("amr-lang") || "es"; }catch(e){}
+let events = [], inspections = [], meta = {start:null};
+let canWrite = true, isAdmin = false;
+let tipIdx = Math.floor(Date.now()/86400000) % TIPS.length;
+const $ = id => document.getElementById(id);
+const t = (k, n) => (T[lang][k]||k).replace("{n}", n);
+const L = o => o[lang];
+
+function applyLang(){
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach(el => el.textContent = t(el.dataset.i18n));
+  document.querySelectorAll("[data-i18n-ph]").forEach(el => el.placeholder = t(el.dataset.i18nPh));
+  $("btnLang").textContent = lang === "es" ? "English" : "Español";
+  $("btnPresent").textContent = document.body.classList.contains("present") ? t("exitPresent") : t("present");
+  const sel = $("fCause").value, z = $("fZone").value, ty = (document.querySelector('input[name=etype]:checked')||{}).value;
+  $("fCause").innerHTML = ""; $("fCause").append(new Option("—",""));
+  Object.entries(CAUSES).forEach(([k,v]) => $("fCause").append(new Option(L(v), k)));
+  $("fCause").value = sel;
+  $("fZone").innerHTML = "";
+  Object.entries(ZONES).forEach(([k,v]) => $("fZone").append(new Option(L(v), k)));
+  if (z) $("fZone").value = z;
+  $("typeBox").innerHTML = "";
+  Object.entries(TYPES).forEach(([k,v]) => {
+    const lb = document.createElement("label");
+    const r = document.createElement("input"); r.type="radio"; r.name="etype"; r.value=k; if (k===ty) r.checked=true;
+    const d = document.createElement("span"); d.className="dot d-"+v.cls;
+    const s = document.createElement("span"); s.textContent = L(v);
+    lb.append(r,d,s); $("typeBox").append(lb);
+  });
+  const checked = [...document.querySelectorAll("#chk input")].map(i=>i.checked);
+  $("chk").innerHTML = "";
+  CHECK.forEach((c,i) => {
+    if(i===0 || CHECK[i-1].g!==c.g){ const h=document.createElement("li"); h.className="grp"; const ht=document.createElement("span"); ht.className="gt"; ht.textContent=t(c.g==="a"?"grpA":"grpB"); const hs=document.createElement("span"); hs.className="gs"; hs.textContent=t(c.g==="a"?"grpAs":"grpBs"); h.append(ht,hs); $("chk").append(h); }
+    const li=document.createElement("li"), lb=document.createElement("label"), cb=document.createElement("input");
+    cb.type="checkbox"; cb.checked=!!checked[i]; cb.addEventListener("change", updChk);
+    const s=document.createElement("span"); s.textContent=L(c); lb.append(cb,s); li.append(lb); $("chk").append(li);
+  });
+  updChk(); showTip(); render();
+}
+function showTip(){ const tp=TIPS[tipIdx]; $("tipText").textContent = L(tp); $("tipStdCode").textContent = tp.std; $("tipStdTopic").textContent = "· " + (lang==="es"?tp.stdEs:tp.stdEn); }
+setInterval(()=>{ tipIdx=(tipIdx+1)%TIPS.length; showTip(); }, 20000);
+
+function updChk(){
+  const boxes=[...document.querySelectorAll("#chk input")], n=boxes.filter(b=>b.checked).length;
+  $("chkBar").style.width = (100*n/boxes.length)+"%";
+  $("chkOk").textContent = n === boxes.length ? t("chkReady") : "";
+}
+
+const DAY=86400000;
+function dayStart(ms){ const d=new Date(ms); d.setHours(0,0,0,0); return d.getTime(); }
+function stats(){
+  const start = meta.start ? Date.parse(meta.start) : (events.length ? Math.min(...events.map(e=>e.ts)) : Date.now());
+  const serious = events.filter(e=>SERIOUS.includes(e.type)).map(e=>e.ts).sort((a,b)=>a-b);
+  const now = Date.now();
+  const last = serious.length ? serious[serious.length-1] : start;
+  const days = Math.max(0, Math.round((dayStart(now)-dayStart(last))/DAY));
+  let rec = days, prev = start;
+  serious.forEach(ts => { rec = Math.max(rec, Math.round((dayStart(ts)-dayStart(prev))/DAY)); prev = ts; });
+  const c=k=>events.filter(e=>e.type===k).length;
+  return {days, rec, near:c("near"), inc:c("inc"), inj:c("inj"), dmg:c("dmg")};
+}
+
+let charts = {};
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function render(){
+  const s = stats();
+  $("vDays").textContent = s.days; $("vNear").textContent = s.near; $("vInc").textContent = s.inc; $("vInj").textContent = s.inj; $("vDmg").textContent = s.dmg;
+  $("vInj").classList.toggle("hot", s.inj>0); $("vDmg").classList.toggle("hot", s.dmg>0);
+  $("vRecord").textContent = t("record", s.rec);
+  const alert = s.days === 0 && events.some(e=>SERIOUS.includes(e.type));
+  $("kDays").classList.toggle("alert", alert); $("vStatus").textContent = alert ? t("stAlert") : t("stOk");
+  renderLog(); renderCharts();
+}
+function fmt(ts){ return new Date(ts).toLocaleString(lang==="es"?"es-MX":"en-US",{dateStyle:"medium",timeStyle:"short"}); }
+function renderLog(){
+  const body=$("logBody"); body.innerHTML="";
+  const list=[...events].sort((a,b)=>b.ts-a.ts);
+  $("logCount").textContent = t("logN", list.length);
+  if(!list.length){ const tr=document.createElement("tr"), td=document.createElement("td"); td.colSpan=8; td.className="empty"; td.textContent=t("empty"); tr.append(td); body.append(tr); return; }
+  list.forEach(e=>{
+    const tr=document.createElement("tr");
+    const cell = txt => { const td=document.createElement("td"); td.textContent = txt||"—"; return td; };
+    const tdT=document.createElement("td"), p=document.createElement("span");
+    const ty=TYPES[e.type]||TYPES.inc; p.className="pill p-"+ty.cls; p.textContent=L(ty); tdT.append(p);
+    if(e.demo){ const d=document.createElement("span"); d.className="demo"; d.textContent="demo"; tdT.append(d); }
+    const tdDel=document.createElement("td");
+    if(isAdmin){ const b=document.createElement("button"); b.type="button"; b.className="icon-btn"; b.textContent=t("del"); b.onclick=()=>delEvent(e.id); tdDel.append(b); }
+    tr.append(cell(fmt(e.ts)), tdT, cell(ZONES[e.zone]?L(ZONES[e.zone]):e.zone), cell(CAUSES[e.cause]?L(CAUSES[e.cause]):e.cause), cell((e.desc||"")+(e.why?" — "+e.why:"")), cell(e.action), cell(e.reporter||t("anon")), tdDel);
+    body.append(tr);
+  });
+}
+function renderCharts(){
+  if(!window.Chart) return;
+  const ink=css("--ink"), muted=css("--muted"), line=css("--line");
+  const col={near:css("--warn"),inc:css("--tec-mid"),inj:css("--stop"),dmg:css("--stop")};
+  Chart.defaults.font.family=css("--body"); Chart.defaults.color=muted;
+  const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:line},ticks:{color:muted}},y:{grid:{color:line},ticks:{color:muted,precision:0},beginAtZero:true}}};
+  const tk=Object.keys(TYPES);
+  const d1={labels:tk.map(k=>L(TYPES[k])),datasets:[{data:tk.map(k=>events.filter(e=>e.type===k).length),backgroundColor:tk.map(k=>col[k]),borderRadius:3}]};
+  const months=[]; const now=new Date(); for(let i=5;i>=0;i--){ months.push(new Date(now.getFullYear(), now.getMonth()-i, 1)); }
+  const mKey=d=>d.getFullYear()+"-"+d.getMonth();
+  const d3={labels:months.map(m=>m.toLocaleString(lang==="es"?"es-MX":"en-US",{month:"short"})),datasets:[
+    {label:L(TYPES.near),data:months.map(m=>events.filter(e=>e.type==="near"&&mKey(new Date(e.ts))===mKey(m)).length),borderColor:col.near,backgroundColor:col.near,tension:.25},
+    {label:lang==="es"?"Incidentes":"Incidents",data:months.map(m=>events.filter(e=>e.type!=="near"&&mKey(new Date(e.ts))===mKey(m)).length),borderColor:css("--stop"),backgroundColor:css("--stop"),tension:.25}]};
+  const opts3=JSON.parse(JSON.stringify(base)); opts3.plugins.legend={display:true,position:"bottom",labels:{color:ink,boxWidth:12}};
+  [["ch1","bar",d1,base],["ch3","line",d3,opts3]].forEach(([id,type,data,o])=>{
+    if(charts[id]){ charts[id].data=data; charts[id].options=o; charts[id].update(); }
+    else charts[id]=new Chart($(id),{type,data,options:o});
+  });
+}
+
+function notice(msg){ const n=$("notice"); if(msg){ n.textContent=msg; n.style.display="block"; } else n.style.display="none"; }
+async function api(fn, ...args){
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(API_URL)) throw new Error("OFFLINE");
+  if(fn === "getData"){
+    const r = await fetch(API_URL + "?action=getData", {cache:"no-store"});
+    if(!r.ok) throw new Error("OFFLINE");
+    return await r.json();
+  }
+  const body = {action: fn};
+  if(fn === "addEvent") body.rec = args[0];
+  else if(fn === "deleteEvent"){ body.id = args[0]; body.code = args[1]; }
+  else body.code = args[0];
+  const r = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(body)});
+  const d = await r.json();
+  if(!d.ok) throw new Error(d.error || "ERROR");
+  return d;
+}
+function errMsg(e){
+  const m = String((e && e.message) || e);
+  if(m.indexOf("ADMIN")>=0) return t("badAdmin");
+  if(m.indexOf("OFFLINE")>=0) return t("offline");
+  return t("writeErr");
+}
+let adminCode = "";
+
+async function load(){
+  try{
+    const d = await api("getData");
+    events = d.events; inspections = d.inspections; meta = {start:d.start};
+    notice(""); render();
+  }catch(e){ notice(errMsg(e)); }
+}
+
+$("evForm").addEventListener("input", ()=>{ $("fErr").textContent=""; });
+$("evForm").addEventListener("change", ()=>{ $("fErr").textContent=""; });
+$("evForm").addEventListener("submit", async ev=>{
+  ev.preventDefault(); $("fOk").textContent="";
+  const type=(document.querySelector('input[name=etype]:checked')||{}).value;
+  if(!type){ $("fErr").textContent=t("needType"); return; }
+  if(!$("fCause").value){ $("fErr").textContent=t("needCause"); $("fCause").focus(); return; }
+  if(!$("fDesc").value.trim()){ $("fErr").textContent=t("needDesc"); $("fDesc").focus(); return; }
+  const when=$("fWhen").value ? Date.parse($("fWhen").value) : Date.now();
+  const rec={type,ts:isNaN(when)?Date.now():when,zone:$("fZone").value,cause:$("fCause").value,desc:$("fDesc").value.trim(),why:$("fWhy").value.trim(),action:$("fAct").value.trim(),reporter:$("fWho").value.trim()};
+  $("btnSave").disabled=true;
+  try{
+    await api("addEvent", rec);
+    ["fDesc","fWhy","fAct","fWho"].forEach(id=>$(id).value=""); $("fCause").value="";
+    document.querySelectorAll('input[name=etype]').forEach(r=>r.checked=false);
+    setNow(); $("fOk").textContent=t("saved"); load();
+  }catch(e){ $("fErr").textContent=errMsg(e); }
+  $("btnSave").disabled=false;
+});
+async function delEvent(id){
+  if(!confirm(t("confirmDel"))) return;
+  try{ await api("deleteEvent", id, adminCode); load(); }catch(e){ notice(errMsg(e)); }
+}
+$("btnDemo").addEventListener("click", async ()=>{
+  try{ await api("deleteDemo", adminCode); load(); }catch(e){ notice(errMsg(e)); }
+});
+$("btnReset").addEventListener("click", async ()=>{
+  if(!confirm(t("confirmReset"))) return;
+  try{ await api("resetSemester", adminCode); load(); }catch(e){ notice(errMsg(e)); }
+});
+$("btnTeacher").addEventListener("click", async ()=>{
+  if(isAdmin){ isAdmin=false; adminCode=""; $("adminBox").hidden=true; $("btnTeacher").textContent=t("teacher"); renderLog(); return; }
+  const c = prompt(t("teacherPrompt")); if(!c) return;
+  try{
+    await api("checkAdmin", c.trim());
+    adminCode=c.trim(); isAdmin=true; $("adminBox").hidden=false; $("btnTeacher").textContent=t("teacherOut"); renderLog();
+  }catch(e){ notice(errMsg(e)); }
+});
+$("btnCsv").addEventListener("click", ()=>{
+  const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+  const head=[t("hWhen"),t("hType"),t("hZone"),t("hCause"),t("hDesc"),t("fWhy"),t("hAct"),t("hWho"),"demo"];
+  const rows=[...events].sort((a,b)=>a.ts-b.ts).map(e=>[new Date(e.ts).toISOString(),L(TYPES[e.type]||TYPES.inc),ZONES[e.zone]?L(ZONES[e.zone]):e.zone,CAUSES[e.cause]?L(CAUSES[e.cause]):e.cause,e.desc,e.why,e.action,e.reporter||t("anon"),e.demo?"si":""].map(q).join(","));
+  const csv="\ufeff"+[head.map(q).join(","),...rows].join("\r\n");
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download="registro-seguridad-amr.csv"; document.body.append(a); a.click(); a.remove();
+});
+$("btnLang").addEventListener("click", ()=>{ lang = lang==="es"?"en":"es"; try{localStorage.setItem("amr-lang",lang);}catch(e){} applyLang(); $("btnTeacher").textContent=t(isAdmin?"teacherOut":"teacher"); });
+$("btnPresent").addEventListener("click", ()=>{ document.body.classList.toggle("present"); $("btnPresent").textContent = document.body.classList.contains("present") ? t("exitPresent") : t("present"); window.scrollTo(0,0); });
+function setNow(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); $("fWhen").value=d.toISOString().slice(0,16); }
+
+setNow(); applyLang(); load();
+setInterval(load, 30000);
+
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", ()=>{ Object.values(charts).forEach(c=>c.destroy()); charts={}; renderCharts(); });
+</script>
+</body>
+</html>
